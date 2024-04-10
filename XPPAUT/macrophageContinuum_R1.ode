@@ -1,0 +1,35 @@
+
+# Model Parameters
+par gammaG=0.2 gammaM=0.05 kappaC=0.35 mMax=25 alpha1=1 alpha2=0.01 cT=0.01 dp=0.02
+
+# Phenotype coordinates (Table of 101 p-values, indexed from 0...100 with p_t=t/50-1. i.e. p_0=-1, ... , p_100=1)
+table p % 101 0 100 t/50-1
+
+# Function definitions
+f1(x)=(1-x)/2
+f2(x)=(x+1)/2
+R(x)=1
+
+# Initial Conditions 
+g(0)=0.5
+c(0)=0.5
+m[0..100](0)=10
+
+# m-equations
+m[0]'= -alpha1*c*(1/dp)*((1-p([0]))*m[0])+alpha2*g*(1/dp)*((1+p([1]))*m[1]-(1+p([0]))*m[0])+(c+cT)*R(p([0]))*(dp/2)*(m[0]+m[100]+2*sum(1,99)of(shift(m0,i')))*(1-(dp/(2*mMax))*(m[0]+m[100]+2*sum(1,99)of(shift(m0,i'))))-gammaM*m[0]
+m[1..99]'= -alpha1*c*(1/dp)*((1-p([j]))*m[j]-(1-p([j-1]))*m[j-1])+alpha2*g*(1/dp)*((1+p([j+1]))*m[j+1]-(1+p([j]))*m[j])+(c+cT)*R(p([j]))*(dp/2)*(m[0]+m[100]+2*sum(1,99)of(shift(m0,i')))*(1-(dp/(2*mMax))*(m[0]+m[100]+2*sum(1,99)of(shift(m0,i'))))-gammaM*m[j]
+m[100]'= -alpha1*c*(1/dp)*((1-p([100]))*m[100]-(1-p([99]))*m[99])+alpha2*g*(1/dp)*(-(1+p([100]))*m[100])+(c+cT)*R(p([100]))*(dp/2)*(m[0]+m[100]+2*sum(1,99)of(shift(m0,i')))*(1-(dp/(2*mMax))*(m[0]+m[100]+2*sum(1,99)of(shift(m0,i'))))-gammaM*m[100]
+
+# g-equation
+g'=(dp/2)*(f1(p([0]))*m[0]+f1(p([100]))*m[100]+2*sum(1,99)of(f1(p(i'))*shift(m0,i')))-gammaG*g
+
+# c-equation
+c'=kappaC*(dp/2)*(f2(p([0]))*m[0]+f2(p([100]))*m[100]+2*sum(1,99)of(f2(p(i'))*shift(m0,i')))-c*g-c
+
+# Note: in the above sums, the counter is i-prime (i') and shift(m0,i') cycles through the variables m0, m1, m2, ... for i'=0,1,2,...
+# Note: General form for indexing a table is name([j]), but for some reason if the table indexing is inside the sum() command we need to remove the []'s to make it work!
+
+@ xlo=0 xhi=1000 ylo=-0.1 yhi=1 yp=c total=1000 bounds=10000 dt=0.01
+@ meth=cvode autovar=c
+@ maxstor=1000000
+done 
